@@ -94,7 +94,21 @@ begin
   dsimp,
   dsimp at ih,
   assert curry_1: forall v: nat, uncurry (fun _: fin 1, v) = ⟨v, fun _, 0⟩,
-  admit,
+  {
+    intro v,
+    unfold uncurry,
+    -- show ⟨v, fun (arg: fin 0), fin.cases_on arg (fun (val: nat) (is_lt : val < 0), v)⟩ = ⟨v, fun _, 0⟩,
+    assert h: forall x y: fin 0 -> nat, x = y,
+    {
+      intros x y,
+      apply funext,
+      intro fin0,
+      cases fin0 with val is_lt,
+      cases is_lt,
+    },
+    rw h (fun (arg: fin 0), fin.cases_on arg (fun (val: nat) (is_lt : val
+ < 0), v)) _,
+  },
   rw curry_1,
   rw curry_1 at ih,
   show prim_eval._match_1 0
@@ -108,7 +122,11 @@ begin
   dsimp at ih,
   rw ih,
   assert curry_at_0: forall k v (rest: fin k -> nat), curry v rest 0 = v,
-  admit,
+  {
+    intros k v rest,
+    unfold curry,
+    reflexivity,
+  },
   rw curry_at_0,
 end
 
