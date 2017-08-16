@@ -1,6 +1,3 @@
-import .ack
-
-
 inductive prim_rec: nat -> Type
 | zero: prim_rec 0
 | succ: prim_rec 1
