@@ -1,3 +1,6 @@
+import .ack
+
+
 inductive prim_rec: nat -> Type
 | zero: prim_rec 0
 | succ: prim_rec 1
@@ -129,24 +132,3 @@ begin
   },
   rw curry_at_0,
 end
-
-
-def prim_depth: forall {k}, prim_rec k -> nat :=
-sorry
-
-
-def sum_of_fin: forall {n}, (fin n -> nat) -> nat :=
-begin
-  intro n,
-  induction n with n' sof,
-  { intro _, exact 0 },
-  intro ls,
-  exact sof (fun x, ls (fin.succ x)) + ls 0,
-end
-
-
-theorem ack_dominates_prim_rec:
-  forall k, forall f: prim_rec k,
-  forall arg: fin k -> nat,
-  ack (prim_depth f) (sum_of_fin arg) >= prim_eval f arg :=
-sorry
