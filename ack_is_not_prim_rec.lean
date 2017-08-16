@@ -11,6 +11,14 @@ begin
 end
 
 
+lemma sum_of_fin_1: forall x, sum_of_fin (fun _: fin 1, x) = x :=
+begin
+  intro x,
+  show 0 + x = x,
+  apply zero_add,
+end
+
+
 def prim_depth: forall {k}, prim_rec k -> nat
 | 0 prim_rec.zero := 0
 | 1 prim_rec.succ := 0
@@ -34,10 +42,6 @@ begin
   intros f h,
   pose x: nat := prim_depth f + 1,
   note ph := ack_dominates_prim_rec 1 f (fun _, x),
-  assert sum_of_fin_1: forall x, sum_of_fin (fun _: fin 1, x) = x,
-  {
-    admit,
-  },
   rw sum_of_fin_1 at ph,
   rw - (h x) at ph,
   apply lt_irrefl (ack (prim_depth f) x),
