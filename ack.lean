@@ -263,7 +263,7 @@ begin
                                  ... =  2 * n' + 2 : by rw nat.succ_mul 1
                                  ... =  2 * (n' + 1) : by reflexivity,
                           end
-                   ... =  2 * ((n' + 1) * ack x y) : by simp
+                   ... =  2 * ((n' + 1) * ack x y) : by rw mul_assoc
                    ... <= 2 * ack x (y + n') : by
                           apply nat.mul_le_mul_left;
                           exact ih2
@@ -286,37 +286,29 @@ begin
   show forall n, ack 2 n > ack 1 (2 * n),
   {
     intro n,
-    rw [ack_2_n, ack_1_n],
-    apply nat.le_refl,
+    calc
+      ack 2 n = 2 * n + 3 : by rw ack_2_n
+          ... > 2 * n + 2 : by apply nat.le_refl
+          ... = ack 1 (2 * n) : by rw ack_1_n
   },
   show forall n, ack (m + 1) n > ack m (2 * n),
   intro n,
   induction n with n' ih2,
   show ack (m + 1) 0 > ack m 0, { apply ack_1st_succ },
   show ack (m + 1) (n' + 1) > ack m (2 * n' + 2),
-  transitivity ack m (ack m (2 * n')),
-  show ack (m + 1) (n' + 1) > ack m (ack m (2 * n')),
-  {
-    simp only [ack],
-    apply ack_2nd_incr,
-    apply ih2,
-  },
-  show ack m (ack m (2 * n')) > ack m (2 * n' + 2),
-  apply ack_2nd_incr,
-  show ack m (2 * n') > 2 * n' + 2,
-  apply nat.lt_of_lt_of_le,
-  show 2 * n' + 2 < ack 2 (2 * n'),
-  {
-    generalize (2 * n') x,
-    intro x,
-    rw ack_2_n,
-    show x + 3 <= 2 * x + 3,
-    rw nat.succ_mul,
-    apply nat.add_le_add_right,
-    apply nat.le_add_left,
-  },
-  show ack 2 (2 * n') <= ack m (2 * n'),
-  apply ack_1st_incr_eq,
-  apply hlt,
+  calc
+    ack (m + 1) (n' + 1) =  ack m (ack (m + 1) n') : by simp [ack]
+                    ...  >  ack m (ack m (2 * n')) : by
+                            apply ack_2nd_incr; apply ih2
+                    ...  >= ack m (2 * n' + 2) :
+                           begin
+                             apply ack_2nd_incr_eq,
+                             calc
+                               ack m (2 * n') >= ack 1 (2 * n') :
+                                                 begin
+                                                   apply ack_1st_incr_eq,
+                                                   exact mge1
+                                                 end
+                                          ... =  2 * n' + 2 : by rw ack_1_n
+                           end
 end
-
