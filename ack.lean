@@ -10,9 +10,10 @@ begin
   induction m with m' ih,
   show forall n, n < ack 0 n,
   {
-    simp [ack],
     intro n,
-    apply nat.le_refl
+    calc
+      n   < n + 1 : nat.le_refl _
+      ... = ack 0 n : by simp [ack]
   },
   show forall n, n < ack (m' + 1) n,
   {
@@ -20,19 +21,17 @@ begin
     induction n with n' ih2,
     show 0 < ack (m' + 1) 0,
     {
-      simp [ack],
-      transitivity 1,
-      apply nat.le_refl,
-      apply ih,
+      calc
+        0   < 1 : nat.le_refl 1
+        ... < ack m' 1 : ih 1
+        ... = ack (m' + 1) 0 : by simp [ack]
     },
     show n' + 1 < ack (m' + 1) (n' + 1),
     {
-      simp [ack],
-      show n' + 2 <= ack m' (ack (m' + 1) n'),
-      transitivity ack (m' + 1) n' + 1,
-      note ih2': n' + 1 <= ack (m' + 1) n' := ih2,
-      apply add_le_add_right ih2' 1,
-      apply ih,
+      calc
+        n' + 1 <= ack (m' + 1) n' : ih2
+           ... <  ack m' (ack (m' + 1) n') : by apply ih
+           ... =  ack (m' + 1) (n' + 1) : by simp [ack]
     },
   }
 end
@@ -52,25 +51,20 @@ begin
   {
     intro n,
     induction n with n' ih2,
+    show m' + 1 < ack (m'+ 1) 0,
     {
-      show m' + 1 < ack (m' + 1) 0,
-      simp [ack],
-      apply ih,
+      calc
+        m' + 1 < ack m' 1 : by apply ih
+           ... = ack (m' + 1) 0 : by simp [ack]
     },
+    show m' + 1 + n' + 1 < ack (m' + 1) (n' + 1),
     {
-      show m' + 1 + n' + 1 < ack (m' + 1) (n' + 1),
-      simp [ack],
-      apply nat.lt_of_le_of_lt,
-      show m' + ack (m' + 1) n' < ack m' (ack (m' + 1) n'), { apply ih },
-      show m' + n' + 2 <= m' + ack (m' + 1) n',
-      repeat { rw nat.add_assoc },
-      apply add_le_add_left,
-      show n' + 2 ≤ ack (m' + 1) n',
-      transitivity m' + 1 + n' + 1,
-      show m' + 1 + n' + 1 <= ack (m' + 1) n', { exact ih2 },
-      show n' + 2 <= m' + 1 + n' + 1,
-      simp,
-      apply nat.le_add_left,
+      calc
+        m' + 1 + n' + 1 <= m' + (m' + 1 + n' + 1) : by apply nat.le_add_left
+                    ... <= m' + ack (m' + 1) n' :
+                           by apply nat.add_le_add_left ih2
+                    ... < ack m' (ack (m' + 1) n') : by apply ih
+                    ... = ack (m' + 1) (n' + 1) : by simp [ack]
     },
   }
 end
@@ -82,15 +76,18 @@ begin
   induction m with m' ih,
   show forall n, ack 0 n < ack 0 (n + 1),
   {
-    simp [ack],
-    apply add_lt_add_left,
-    apply nat.le_refl
+    intro n,
+    calc
+      ack 0 n = n + 1 : by simp [ack]
+          ... < n + 2 : by apply nat.le_refl
+          ... = ack 0 (n + 1) : by simp [ack]
   },
   show forall n, ack (m' + 1) n < ack (m' + 1) (n + 1),
   {
     intro n,
-    simp [ack],
-    apply ack_2nd_lt_val,
+    calc
+      ack (m' + 1) n < ack m' (ack (m' + 1) n) : by apply ack_2nd_lt_val
+                 ... = ack (m' + 1) (n + 1) : by simp [ack]
   }
 end
 
@@ -131,17 +128,11 @@ begin
   show ack m 0 < ack m 1, { apply ack_2nd_succ },
   show ack m (n' + 1) < ack m (ack (m + 1) n'),
   {
-    apply nat.lt_of_le_of_lt,
-    {
-      show ack m (n' + 1) <= ack m (m + 1 + n'),
-      apply ack_2nd_incr_eq, simp,
-      apply nat.le_add_left,
-    },
-    {
-      show ack m (m + 1 + n') < ack m (ack (m + 1) n'),
-      apply ack_2nd_incr,
-      apply ack_argsum_lt_val,
-    },
+    calc
+      ack m (n' + 1) <= ack m (m + 1 + n') :
+            by apply ack_2nd_incr_eq; simp; apply nat.le_add_left
+                 ... <  ack m (ack (m + 1) n') :
+            by apply ack_2nd_incr; apply ack_argsum_lt_val
   },
 end
 
@@ -182,16 +173,15 @@ begin
   show ack m 1 <= ack (m + 1) 0, { simp [ack] },
   show ack m (n' + 2) <= ack (m + 1) (n' + 1),
   {
-    simp [ack],
-    apply ack_2nd_incr_eq,
-    show n' + 2 <= ack (m + 1) n',
-    transitivity,
-    show m + 1 + n' + 1 <= ack (m + 1) n', { apply ack_argsum_lt_val },
-    show n' + 2 <= m + 1 + n' + 1,
-    {
-      simp,
-      apply nat.le_add_left,
-    }
+    calc
+      ack m (n' + 2) <= ack m (ack (m + 1) n') :
+        begin
+          apply ack_2nd_incr_eq,
+          calc
+            n' + 2 <= m + 1 + n' + 1 : by simp; apply nat.le_add_left
+               ... <= ack (m + 1) n' : by apply ack_argsum_lt_val
+        end
+                 ... =  ack (m + 1) (n' + 1) : by simp [ack]
   }
 end
 
@@ -206,9 +196,9 @@ begin
   {
     apply ack_2nd_incr_eq,
     apply ack_1st_incr_eq,
-    transitivity max a b,
-    apply le_max_right,
-    apply nat.le_succ,
+    calc
+      b   <= max a b : by apply le_max_right
+      ... <= max a b + 1 : by apply nat.le_succ
   },
   show ack a (ack (max a b + 1) y) <= ack (max a b) (ack (max a b + 1) y),
   apply ack_1st_incr_eq,
@@ -222,9 +212,9 @@ begin
   induction n with n' ih,
   show ack 1 0 = 2, { simp [ack], },
   show ack 1 (n' + 1) = n' + 3,
-  simp [ack],
-  rw ih,
-  simp,
+  calc
+    ack 1 (n' + 1) = (ack 1 n') + 1 : by simp [ack]
+               ... = n' + 3 : by rw ih
 end
 
 
@@ -234,9 +224,10 @@ begin
   induction n with n' ih,
   show ack 2 0 = 3, { simp [ack], },
   show ack 2 (n' + 1) = 2 * n' + 5,
-  simp only [ack],
-  rw ih,
-  rw ack_1_n,
+  calc
+    ack 2 (n' + 1) = ack 1 (ack 2 n') : by simp [ack]
+               ... = ack 2 n' + 2 : by rw ack_1_n
+               ... = 2 * n' + 5 : by rw ih
 end  
 
 
