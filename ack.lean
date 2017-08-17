@@ -92,33 +92,42 @@ begin
 end
 
 
-lemma ack_2nd_incr: forall m n p, n < p -> ack m n < ack m p :=
+lemma incr_of_succ : forall f: nat -> nat,
+  (forall x, f x < f (x + 1)) -> forall m n, m < n -> f m < f n :=
 begin
-  intros m n p hlt,
-  induction hlt with p' ih,
-  show ack m n < ack m (n + 1), { apply ack_2nd_succ },
-  show ack m n < ack m (p' + 1),
-  {
-    transitivity,
-    assumption,
-    apply ack_2nd_succ,
-  }
+  intros f succ m n hlt,
+  induction hlt with n' mlen' ih,
+  show f m < f (m + 1), { apply succ },
+  show f m < f (n' + 1),
+  calc
+    f m < f n' : ih
+    ... < f (n' + 1) : succ n'
 end
+
+
+lemma incr_eq_of_succ : forall f: nat -> nat,
+  (forall x, f x < f (x + 1)) -> forall m n, m <= n -> f m <= f n :=
+begin
+  intros f succ m n hle,
+  induction hle with n' _ ih,
+  show f m <= f m, { reflexivity },
+  show f m <= f (n' + 1),
+  calc
+    f m <= f n' : ih
+    ... <=  f (n' + 1) : le_of_lt (succ n')
+end
+
+
+lemma ack_2nd_incr: forall m n p, n < p -> ack m n < ack m p :=
+  take m n p,
+  suppose nltp: n < p,
+  incr_of_succ (ack m) (ack_2nd_succ m) n p nltp
 
 
 lemma ack_2nd_incr_eq: forall m n p, n <= p -> ack m n <= ack m p :=
-begin
-  intros m n p hle,
-  cases nat.eq_or_lt_of_le hle with heq hlt,
-  {
-    rw heq,
-  },
-  {
-    apply le_of_lt,
-    apply ack_2nd_incr,
-    assumption,
-  }
-end
+  take m n p,
+  suppose nlep: n <= p,
+  incr_eq_of_succ (ack m) (ack_2nd_succ m) n p nlep
 
 
 lemma ack_1st_succ: forall m n, ack m n < ack (m + 1) n :=
@@ -138,32 +147,15 @@ end
 
 
 lemma ack_1st_incr: forall l m n, l < m -> ack l n < ack m n :=
-begin
-  intros l m n hlt,
-  induction hlt with m' ih,
-  show ack l n < ack (l + 1) n, { apply ack_1st_succ },
-  show ack l n < ack (m' + 1) n,
-  {
-    transitivity,
-    assumption,
-    apply ack_1st_succ
-  }
-end
+  take l m n,
+  suppose lltm: l < m,
+  incr_of_succ (fun i, ack i n) (take i, ack_1st_succ i n) l m lltm
 
 
 lemma ack_1st_incr_eq: forall l m n, l <= m -> ack l n <= ack m n :=
-begin
-  intros l m n hle,
-  cases nat.eq_or_lt_of_le hle with heq hlt,
-  {
-    rw heq,
-  },
-  {
-    apply le_of_lt,
-    apply ack_1st_incr,
-    assumption,
-  }
-end
+  take l m n,
+  suppose llem: l <= m,
+  incr_eq_of_succ (fun i, ack i n) (take i, ack_1st_succ i n) l m llem
 
 
 lemma ack_arg_1st_prior: forall m n, ack m (n + 1) <= ack (m + 1) n :=
@@ -228,7 +220,7 @@ begin
     ack 2 (n' + 1) = ack 1 (ack 2 n') : by simp [ack]
                ... = ack 2 n' + 2 : by rw ack_1_n
                ... = 2 * n' + 5 : by rw ih
-end  
+end
 
 
 lemma ack_lemma_7: forall n x y,
