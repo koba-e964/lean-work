@@ -182,19 +182,18 @@ lemma ack_dual_app:
   forall a b y, ack a (ack b y) <= ack (max a b + 1) (y + 1) :=
 begin
   intros a b y,
-  simp only [ack],
-  transitivity ack a (ack (max a b + 1) y),
-  show ack a (ack b y) <= ack a (ack (max a b + 1) y),
-  {
-    apply ack_2nd_incr_eq,
-    apply ack_1st_incr_eq,
-    calc
-      b   <= max a b : by apply le_max_right
-      ... <= max a b + 1 : by apply nat.le_succ
-  },
-  show ack a (ack (max a b + 1) y) <= ack (max a b) (ack (max a b + 1) y),
-  apply ack_1st_incr_eq,
-  apply le_max_left,
+  calc
+    ack a (ack b y) <= ack a (ack (max a b + 1) y) :
+                       begin
+                         apply ack_2nd_incr_eq,
+                         apply ack_1st_incr_eq,
+                         calc
+                           b   <= max a b : by apply le_max_right
+                           ... <= max a b + 1 : by apply nat.le_succ
+                       end
+                ... <= ack (max a b) (ack (max a b + 1) y) : by
+                       apply ack_1st_incr_eq; apply le_max_left
+                ... =  ack (max a b + 1) (y + 1) : by simp only [ack]
 end
 
 
