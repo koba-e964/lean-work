@@ -238,22 +238,6 @@ begin
   induction n with n' ih2,
   show 1 * ack x y <= ack x y, { simp },
   show (n' + 2) * ack x y <= ack x (y + n' + 1),
-  transitivity 2 * ack x (y + n'),
-  show (n' + 2) * ack x y <= 2 * ack x (y + n'),
-  {
-    transitivity 2 * (n' + 1) * ack x y,
-    {
-      apply nat.mul_le_mul_right,
-      apply nat.add_le_add_right _ 2,
-      show n' <= 2 * n',
-      rw nat.succ_mul,
-      apply nat.le_add_left,
-    },
-    rw nat.mul_assoc,
-    apply nat.mul_le_mul_left,
-    apply ih2,
-  },
-  show 2 * ack x (y + n') <= ack x (y + n' + 1),
   assert h: {x': nat // x' + 1 = x},
   {
     cases x with x',
@@ -269,15 +253,27 @@ begin
     rw xsucc,
     exact hlt,
   },
-  rw -xsucc,
-  simp only [ack],
-  transitivity ack 2 (ack (x' + 1) (y + n')),
-  {
-    rw ack_2_n,
-    apply nat.le_add_right,
-  },
-  apply ack_1st_incr_eq,
-  assumption,
+  calc
+    (n' + 2) * ack x y <= 2 * (n' + 1) * ack x y :
+                          begin
+                            apply nat.mul_le_mul_right,
+                            calc
+                              n' + 2 <= 1 * n' + n' + 2 :
+                                        by apply nat.le_add_left
+                                 ... =  2 * n' + 2 : by rw nat.succ_mul 1
+                                 ... =  2 * (n' + 1) : by reflexivity,
+                          end
+                   ... =  2 * ((n' + 1) * ack x y) : by simp
+                   ... <= 2 * ack x (y + n') : by
+                          apply nat.mul_le_mul_left;
+                          exact ih2
+                   ... =  2 * ack (x' + 1) (y + n') : by rw xsucc
+                   ... <= ack 2 (ack (x' + 1) (y + n')) : by
+                          rw ack_2_n; apply nat.le_add_right
+                   ... <= ack x' (ack (x' + 1) (y + n')) :
+                          by apply ack_1st_incr_eq; exact x'ge2
+                   ... =  ack (x' + 1) (y + n' + 1) : by simp only [ack]
+                   ... =  ack x (y + n' + 1) : by rw xsucc
 end
 
 
