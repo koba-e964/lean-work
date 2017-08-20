@@ -67,9 +67,35 @@ def prim_eval : forall {k}, prim_rec k -> (fin k -> nat) -> nat
 
 
 lemma succ_succ : forall x, prim_eval prim_rec.succ (fun _, x) = x + 1 :=
+take x,
+calc
+  prim_eval prim_rec.succ (fun _, x) = x + 1 : by unfold prim_eval; reflexivity
+
+
+lemma uncurry_1: forall v: nat, uncurry (fun _: fin 1, v) = ⟨v, fun _, 0⟩ :=
 begin
-  intro x,
-  unfold prim_eval,
+  intro v,
+  assert h: forall x: fin 0 -> nat, x = (fun _, 0),
+  {
+    intros x,
+    apply funext,
+    intro fin0,
+    cases fin0 with val is_lt,
+    cases is_lt,
+  },
+  calc
+   uncurry (fun _: fin 1, v)
+     = (v, fun arg: fin 0, fin.cases_on arg (fun _ _, v)) :
+           by simp only [uncurry]
+ ... = (v, fun _, 0) : by rw h (fun arg: fin 0, fin.cases_on arg (fun _ _, v))
+end
+
+
+
+lemma curry_at_0: forall k v (rest: fin k -> nat), curry v rest 0 = v :=
+begin
+  intros k v rest,
+  unfold curry,
   reflexivity,
 end
 
@@ -93,24 +119,8 @@ begin
   unfold prim_eval at ih,
   dsimp,
   dsimp at ih,
-  assert curry_1: forall v: nat, uncurry (fun _: fin 1, v) = ⟨v, fun _, 0⟩,
-  {
-    intro v,
-    unfold uncurry,
-    -- show ⟨v, fun (arg: fin 0), fin.cases_on arg (fun (val: nat) (is_lt : val < 0), v)⟩ = ⟨v, fun _, 0⟩,
-    assert h: forall x y: fin 0 -> nat, x = y,
-    {
-      intros x y,
-      apply funext,
-      intro fin0,
-      cases fin0 with val is_lt,
-      cases is_lt,
-    },
-    rw h (fun (arg: fin 0), fin.cases_on arg (fun (val: nat) (is_lt : val
- < 0), v)) _,
-  },
-  rw curry_1,
-  rw curry_1 at ih,
+  rw uncurry_1,
+  rw uncurry_1 at ih,
   show prim_eval._match_1 0
       (fun (v : nat) (arg : fin 0 -> nat), nat.rec 0 (fun (v' prev :
         nat), curry prev (curry v' arg) 0 + 1) v)
@@ -121,11 +131,5 @@ begin
   dsimp,
   dsimp at ih,
   rw ih,
-  assert curry_at_0: forall k v (rest: fin k -> nat), curry v rest 0 = v,
-  {
-    intros k v rest,
-    unfold curry,
-    reflexivity,
-  },
   rw curry_at_0,
 end
