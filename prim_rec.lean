@@ -112,24 +112,14 @@ begin
   intro x,
   induction x with x' ih,
   reflexivity,
-  show prim_eval (prim_rec.prec prim_rec.zero (prim_rec.comp prim_rec.succ (fun (_ : fin 1), prim_rec.proj 0)))
-      (fun (_ : fin 1), nat.succ x') =
+  show prim_eval (prim_rec.prec prim_rec.zero (prim_rec.comp prim_rec.succ (fun _ : fin 1, prim_rec.proj 0)))
+      (fun _ : fin 1, x' + 1) =
     x' + 1,
-  unfold prim_eval,
-  unfold prim_eval at ih,
-  dsimp,
-  dsimp at ih,
-  rw uncurry_1,
-  rw uncurry_1 at ih,
-  show prim_eval._match_1 0
-      (fun (v : nat) (arg : fin 0 -> nat), nat.rec 0 (fun (v' prev :
-        nat), curry prev (curry v' arg) 0 + 1) v)
-      ((nat.succ x', fun _: fin 0, 0)) =
-    x' + 1,
-  unfold prim_eval._match_1,
-  unfold prim_eval._match_1 at ih,
-  dsimp,
-  dsimp at ih,
-  rw ih,
-  rw curry_at_0,
+  calc
+    prim_eval (prim_rec.prec prim_rec.zero (prim_rec.comp prim_rec.succ (fun _ : fin 1, prim_rec.proj 0)))
+      (fun _ : fin 1, x' + 1)
+    = prim_eval (prim_rec.prec prim_rec.zero (prim_rec.comp prim_rec.succ (fun _ : fin 1, prim_rec.proj 0)))
+      (fun _ : fin 1, x') + 1 : by reflexivity
+... = x' + 1 :
+      by rw ih
 end
