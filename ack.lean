@@ -178,6 +178,21 @@ begin
 end
 
 
+lemma ack_arg_1st_prior_any: forall m n p, ack m (n + p) <= ack (m + p) n :=
+fun m n p,
+begin
+  revert m n,
+  induction p with p' ih,
+  intros m n,
+  reflexivity,
+  intros m n,
+  calc
+    ack m (n + p' + 1) <= ack (m + 1) (n + p') : by apply ack_arg_1st_prior
+                   ... <= ack (m + 1 + p') n : by apply ih
+                   ... =  ack (m + p' + 1) n : by simp
+end
+
+
 lemma ack_dual_app:
   forall a b y, ack a (ack b y) <= ack (max a b + 1) (y + 1) :=
 begin

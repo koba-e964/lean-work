@@ -46,6 +46,43 @@ begin
 end
 
 
+lemma sum_of_fin_const: forall k v, sum_of_fin (fun _: fin k, v) = k * v :=
+fun k v,
+begin
+  induction k with k' ih,
+  { rw nat.mul_comm; reflexivity },
+  calc
+    sum_of_fin (fun (_x : fin (k' + 1)), v)
+        = sum_of_fin (fun (_: fin k'), v) + v : by reflexivity
+    ... = k' * v + v : by rw ih
+    ... = (k' + 1) * v : by rw nat.succ_mul,
+end
+
+
+lemma sum_of_fin_incr_eq: forall k, forall x y: fin k -> nat,
+  (forall i: fin k, x i <= y i) -> sum_of_fin x <= sum_of_fin y :=
+fun k,
+begin
+  induction k with k' ih,
+  {
+    intros x y h,
+    reflexivity,
+  },
+  intros x y h,
+  calc
+    sum_of_fin x = sum_of_fin (fun i, x (fin.succ i)) + x 0 : by reflexivity
+    ... <= sum_of_fin (fun i, x (fin.succ i)) + y 0 : by apply nat.add_le_add_left; apply h
+    ... <= sum_of_fin (fun i, y (fin.succ i)) + y 0 :
+           begin
+             apply nat.add_le_add_right,
+             apply ih,
+             intro i,
+             apply h,
+           end
+    ... =  sum_of_fin y : by reflexivity
+end
+
+
 lemma fin_1_curry: forall arg: fin 1 -> nat, (fun _: fin 1, arg 0) = arg :=
 take arg,
 begin
@@ -64,7 +101,7 @@ def prim_depth: forall {k}, prim_rec k -> nat
 | 1 prim_rec.succ := 0
 | m (@prim_rec.proj .(m) _) := 0
 | m (@prim_rec.comp k .(m) (f: prim_rec k) (g: fin k -> prim_rec m)) :=
-  max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i)))
+  max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i))) + 2
 | (k + 1) (@prim_rec.prec .(k) f g) := max (prim_depth f) (prim_depth g + 2)
 
 
@@ -79,7 +116,7 @@ end
 
 
 lemma prim_depth_rw_comp: forall k m, forall f: prim_rec k, forall g: fin k -> prim_rec m,
-  prim_depth (prim_rec.comp f g) = max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i)))
+  prim_depth (prim_rec.comp f g) = max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i))) + 2
   :=
 fun k m f g,
 begin
@@ -93,7 +130,7 @@ theorem ack_dominates_prim_rec:
   forall k, forall f: prim_rec k,
   forall arg: fin k -> nat,
   ack (prim_depth f) (sum_of_fin arg) >= prim_eval f arg :=
-take k_d f arg,
+fun k_d f arg,
 begin
 induction f with n a k m f g _ _ k f g; clear k_d,
 calc
@@ -119,11 +156,56 @@ calc
    ... =  prim_eval (prim_rec.proj a) arg : by reflexivity,
 calc
   ack (prim_depth (prim_rec.comp f g)) (sum_of_fin arg)
-       = ack (max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i)))) (sum_of_fin arg)
+       = ack (max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i))) + 2) (sum_of_fin arg)
          : by rw prim_depth_rw_comp
-  ...  >= ack (prim_depth f) (ack (sum_of_fin (fun i, prim_depth (g i))) (sum_of_fin arg))
-         : by admit
-  ...  >= ack (prim_depth f) (sum_of_fin (fun i, prim_eval (g i) arg)) : by admit
+  ...  >= ack (max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i))) + 1) (sum_of_fin arg + 1) :
+           by apply ack_arg_1st_prior
+  ...  >= ack (prim_depth f) (ack (k + 3 + sum_of_fin (fun i, prim_depth (g i))) (sum_of_fin arg))
+         : by apply ack_dual_app
+  ...  >= ack (prim_depth f) (sum_of_fin (fun i, prim_eval (g i) arg)) :
+           begin
+             apply ack_2nd_incr_eq,
+             calc
+               sum_of_fin (fun i, prim_eval (g i) arg)
+                    <= sum_of_fin (fun i, ack (prim_depth (g i)) (sum_of_fin arg)) :
+                       begin
+                         apply sum_of_fin_incr_eq,
+                         intro i,
+                         apply ih_2,
+                       end
+               ...  <= sum_of_fin (fun _: fin k, ack (sum_of_fin (fun i, prim_depth (g i))) (sum_of_fin arg)) :
+                       begin
+                         apply sum_of_fin_incr_eq,
+                         intro i,
+                         apply ack_1st_incr_eq,
+                         apply sum_of_fin_ge_arg k (fun (i : fin k), prim_depth (g i))
+                       end
+               ...  =  k * ack (sum_of_fin (fun i, prim_depth (g i))) (sum_of_fin arg) :
+                          by apply sum_of_fin_const
+               ...  <= (k + 1) * ack (sum_of_fin (fun i, prim_depth (g i))) (sum_of_fin arg) :
+                          by apply nat.mul_le_mul_right; apply nat.le_add_right
+               ...  <= (k + 1) * ack (sum_of_fin (fun i, prim_depth (g i)) + 3) (sum_of_fin arg) :
+                       begin
+                         apply nat.mul_le_mul_left,
+                         apply ack_1st_incr_eq,
+                         apply nat.le_add_right,
+                       end
+               ...  <= ack (sum_of_fin (fun i, prim_depth (g i)) + 3) (sum_of_fin arg + k) :
+                       begin
+                         apply ack_lemma_7,
+                         apply nat.le_add_left,
+                       end
+               ...  <= ack (k + 3 + sum_of_fin (fun i, prim_depth (g i))) (sum_of_fin arg) :
+                       begin
+                         generalize (sum_of_fin (fun i, prim_depth (g i))) x,
+                         generalize (sum_of_fin arg) y,
+                         intros x y,
+                         calc
+                           ack (y + 3) (x + k) <= ack (y + 3 + k) x :
+                             by apply ack_arg_1st_prior_any
+                           ... = ack (k + 3 + y) x : by simp
+                       end
+           end
   ...  >= prim_eval f (fun i, prim_eval (g i) arg) : by apply ih_1
   ...  =  prim_eval (prim_rec.comp f g) arg : by reflexivity,
 calc
