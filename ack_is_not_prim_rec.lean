@@ -88,7 +88,16 @@ lemma sum_of_fin_of_curry: forall k v, forall rest: fin k -> nat,
 begin
   calc
     sum_of_fin (curry v rest) = sum_of_fin (fun i, (curry v rest) (fin.succ i)) + (curry v rest) 0 : by reflexivity
-    ... = sum_of_fin rest + curry v rest 0 : by admit
+    ... = sum_of_fin rest + curry v rest 0 :
+          begin
+            pose h : (fun i, curry v rest (fin.succ i)) = rest :=
+            begin
+              apply funext,
+              intro x,
+              rw curry_at_succ,
+            end,
+            rw h,
+          end
     ... = sum_of_fin rest + v : by rw curry_at_0
 end
 

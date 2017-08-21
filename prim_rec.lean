@@ -100,6 +100,15 @@ begin
 end
 
 
+lemma curry_at_succ: forall k v (rest: fin k -> nat) (i: fin k), curry v rest (fin.succ i) = rest i
+  :=
+begin
+  intros k v rest i,
+  cases i with i is_lt,
+  reflexivity,
+end
+
+
 example : prim_eval prim_rec.zero (fun _, 0) = 0 := by reflexivity
 
 
