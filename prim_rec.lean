@@ -100,10 +100,7 @@ begin
 end
 
 
-example : prim_eval prim_rec.zero (fun _, 0) = 0 :=
-begin
-  reflexivity,
-end
+example : prim_eval prim_rec.zero (fun _, 0) = 0 := by reflexivity
 
 
 example : forall x, prim_eval (prim_rec.prec prim_rec.zero
