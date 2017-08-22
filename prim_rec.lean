@@ -112,8 +112,11 @@ end
 example : prim_eval prim_rec.zero (fun _, 0) = 0 := by reflexivity
 
 
-example : forall x, prim_eval (prim_rec.prec prim_rec.zero
-  (prim_rec.comp prim_rec.succ (fun _, prim_rec.proj 0))) (fun _, x) = x :=
+def prim_id: prim_rec 1 := prim_rec.prec prim_rec.zero
+  (prim_rec.comp prim_rec.succ (fun _, prim_rec.proj 0))
+
+
+lemma prim_id_is_id : forall x, prim_eval prim_id (fun _, x) = x :=
 begin
   intro x,
   induction x with x' ih,
@@ -124,7 +127,7 @@ begin
   calc
     prim_eval (prim_rec.prec prim_rec.zero (prim_rec.comp prim_rec.succ (fun _ : fin 1, prim_rec.proj 0)))
       (fun _ : fin 1, x' + 1)
-    = prim_eval (prim_rec.prec prim_rec.zero (prim_rec.comp prim_rec.succ (fun _ : fin 1, prim_rec.proj 0)))
+    = prim_eval prim_id
       (fun _ : fin 1, x') + 1 : by reflexivity
 ... = x' + 1 :
       by rw ih

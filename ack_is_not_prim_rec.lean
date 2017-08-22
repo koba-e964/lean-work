@@ -295,3 +295,30 @@ begin
         <  ack x x : by apply ack_1st_succ
     ... <= ack (prim_depth f) x : ph,
 end
+
+
+theorem ack_is_not_prim_rec_2:
+  forall f: prim_rec 2, (forall x y,
+  ack x y =  prim_eval f (curry x (fun _: fin 1, y))) -> false :=
+begin
+  intros f h,
+  note one_arg_ver: forall x, ack x x = prim_eval (prim_rec.comp f (fun _, prim_id)) (fun _, x)
+  :=
+  begin
+    intro x,
+    show ack x x = prim_eval f (fun _, prim_eval prim_id (fun _, x)),
+    rw prim_id_is_id,
+    rw h x x,
+    apply congr_arg,
+    apply funext,
+    intro i,
+    cases i with i is_lt,
+    note h := nat.le_of_lt_succ is_lt,
+    cases h,
+    reflexivity,
+    note hp := nat.eq_zero_of_le_zero a,
+    cases hp,
+    reflexivity,
+  end,
+  exact ack_is_not_prim_rec _ one_arg_ver,
+end
