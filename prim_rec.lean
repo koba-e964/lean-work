@@ -6,17 +6,16 @@ inductive prim_rec: nat -> Type
 | prec: forall {k}, prim_rec k -> prim_rec (k + 2) -> prim_rec (k + 1)
 
 
-def curry {k} (v: nat) (a: fin k -> nat): fin (k + 1) -> nat :=
-begin
-  intro arg,
-  cases arg with val is_lt,
-  cases val with val',
-  exact v, -- arg(0) = v
-  apply a,
-  existsi val',
-  apply nat.lt_of_succ_lt_succ,
-  exact is_lt,
-end
+def curry {k} (v: nat) (a: fin k -> nat): (fin (k + 1)) -> nat
+| ⟨val, is_lt⟩ :=
+  begin
+    cases val with val',
+    exact v, -- arg(0) = v
+    apply a,
+    existsi val',
+    apply nat.lt_of_succ_lt_succ,
+    exact is_lt,
+  end
 
 
 def uncurry {k} (a: fin (k + 1) -> nat): prod nat (fin k -> nat) :=
@@ -46,7 +45,6 @@ begin
     show a ⟨nat.succ val', is_lt⟩ =
   curry ((uncurry a).fst) ((uncurry a).snd) ⟨val' + 1, is_lt⟩,
   unfold curry,
-  simp,
   reflexivity,
 end
 
@@ -109,9 +107,6 @@ begin
 end
 
 
-example : prim_eval prim_rec.zero (fun _, 0) = 0 := by reflexivity
-
-
 def prim_id: prim_rec 1 := prim_rec.prec prim_rec.zero
   (prim_rec.comp prim_rec.succ (fun _, prim_rec.proj 0))
 
@@ -121,11 +116,11 @@ begin
   intro x,
   induction x with x' ih,
   reflexivity,
-  show prim_eval (prim_rec.prec prim_rec.zero (prim_rec.comp prim_rec.succ (fun _ : fin 1, prim_rec.proj 0)))
+  show prim_eval prim_id
       (fun _ : fin 1, x' + 1) =
     x' + 1,
   calc
-    prim_eval (prim_rec.prec prim_rec.zero (prim_rec.comp prim_rec.succ (fun _ : fin 1, prim_rec.proj 0)))
+    prim_eval prim_id
       (fun _ : fin 1, x' + 1)
     = prim_eval prim_id
       (fun _ : fin 1, x') + 1 : by reflexivity
