@@ -1,22 +1,9 @@
 import .ack .prim_rec
 
 
-def sum_of_fin: forall {n}, (fin n -> nat) -> nat :=
-begin
-  intro n,
-  induction n with n' sof,
-  { intro _, exact 0 },
-  intro ls,
-  exact sof (fun x, ls (fin.succ x)) + ls 0,
-end
-
-
-lemma sum_of_fin_1: forall x, sum_of_fin (fun _: fin 1, x) = x :=
-begin
-  intro x,
-  show 0 + x = x,
-  apply zero_add,
-end
+def sum_of_fin: forall {n}, (fin n -> nat) -> nat
+| 0 _ := 0
+| (n' + 1) ls := sum_of_fin (fun i, ls (fin.succ i)) + ls 0
 
 
 lemma sum_of_fin_ge_arg : forall n, forall tuple: fin n -> nat, forall i: fin n,
@@ -27,7 +14,7 @@ begin
   show sum_of_fin tuple >= tuple i,
   {
     cases i with _ ilt0,
-    pose h: false := nat.not_succ_le_zero _ ilt0,
+    note := nat.not_succ_le_zero _ ilt0,
     contradiction,
   },
   show sum_of_fin tuple >= tuple i,
@@ -59,6 +46,10 @@ begin
 end
 
 
+lemma sum_of_fin_1: forall x, sum_of_fin (fun _: fin 1, x) = x :=
+fun x, by rw sum_of_fin_const; simp
+
+
 lemma sum_of_fin_incr_eq: forall k, forall x y: fin k -> nat,
   (forall i: fin k, x i <= y i) -> sum_of_fin x <= sum_of_fin y :=
 fun k,
@@ -70,7 +61,8 @@ begin
   },
   intros x y h,
   calc
-    sum_of_fin x = sum_of_fin (fun i, x (fin.succ i)) + x 0 : by reflexivity
+    sum_of_fin x
+        =  sum_of_fin (fun i, x (fin.succ i)) + x 0 : by reflexivity
     ... <= sum_of_fin (fun i, x (fin.succ i)) + y 0 : by apply nat.add_le_add_left; apply h
     ... <= sum_of_fin (fun i, y (fin.succ i)) + y 0 :
            begin
@@ -87,10 +79,11 @@ lemma sum_of_fin_of_curry: forall k v, forall rest: fin k -> nat,
   sum_of_fin (curry v rest) = sum_of_fin rest + v := fun k v rest,
 begin
   calc
-    sum_of_fin (curry v rest) = sum_of_fin (fun i, (curry v rest) (fin.succ i)) + (curry v rest) 0 : by reflexivity
+    sum_of_fin (curry v rest)
+        = sum_of_fin (fun i, curry v rest (fin.succ i)) + curry v rest 0 : by reflexivity
     ... = sum_of_fin rest + curry v rest 0 :
           begin
-            pose h : (fun i, curry v rest (fin.succ i)) = rest :=
+            note h : (fun i, curry v rest (fin.succ i)) = rest :=
             begin
               apply funext,
               intro x,
@@ -108,23 +101,23 @@ begin
   apply funext,
   intro x,
   cases x with x lt,
-  cases lt with s a,
+  note h: x <= 0 := nat.le_of_lt_succ lt,
+  note xeq0: x = 0 := nat.eq_zero_of_le_zero h,
+  cases xeq0,
   reflexivity,
-  note h: false := nat.not_succ_le_zero x a,
-  contradiction,
 end
 
 
 def prim_depth: forall {k}, prim_rec k -> nat
 | 0 prim_rec.zero := 0
 | 1 prim_rec.succ := 0
-| m (@prim_rec.proj .(m) _) := 0
+| m (prim_rec.proj _) := 0
 | m (@prim_rec.comp k .(m) (f: prim_rec k) (g: fin k -> prim_rec m)) :=
   max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i))) + 2
-| (k + 1) (@prim_rec.prec .(k) f g) := max (prim_depth f) (prim_depth g + 2) + 1
+| (k + 1) (prim_rec.prec f g) := max (prim_depth f) (prim_depth g + 2) + 1
 
 
-lemma prim_depth_rw_proj : forall n, forall idx: fin n, @prim_depth n (@prim_rec.proj n idx) = 0 :=
+lemma prim_depth_rw_proj : forall n, forall idx: fin n, prim_depth (prim_rec.proj idx) = 0 :=
 begin
   intros n idx,
   cases n with n',
@@ -150,7 +143,6 @@ lemma prim_depth_rw_prec: forall k, forall f: prim_rec k, forall g: prim_rec (k 
 fun k f g, by cases k; reflexivity
 
 
-
 theorem ack_dominates_prim_rec:
   forall k, forall f: prim_rec k,
   forall arg: fin k -> nat,
@@ -160,22 +152,21 @@ begin
 induction f with n a k m f g _ _ k f g; clear k_d,
 calc
   ack (prim_depth prim_rec.zero) (sum_of_fin arg)
-      =  ack (prim_depth prim_rec.zero) 0 : by reflexivity
-  ... =  ack 0 0 : by reflexivity
-  ... =  1 : by simp [ack]
+      =  ack 0 0 : by reflexivity
+  ... =  1 : by simp only [ack]
   ... >= 0 : by apply nat.le_succ
   ... =  prim_eval prim_rec.zero arg : by reflexivity,
 calc
   ack (prim_depth prim_rec.succ) (sum_of_fin arg)
        = ack 0 (sum_of_fin arg) : by reflexivity
-   ... = sum_of_fin arg + 1 : by simp [ack]
+   ... = sum_of_fin arg + 1 : by simp only [ack]
    ... = sum_of_fin (fun _: fin 1, arg 0) + 1 : by rw fin_1_curry
    ... = arg 0 + 1 : by rw sum_of_fin_1
-   ... >= prim_eval prim_rec.succ arg : by unfold prim_eval; apply nat.le_refl,
+   ... >= prim_eval prim_rec.succ arg : by apply nat.le_refl,
 calc
-  ack (prim_depth (@prim_rec.proj n a)) (@sum_of_fin n arg)
-       = ack 0 (@sum_of_fin n arg) : by rw prim_depth_rw_proj
-   ... = sum_of_fin arg + 1 : by simp [ack]
+  ack (prim_depth (prim_rec.proj a)) (sum_of_fin arg)
+       = ack 0 (sum_of_fin arg) : by rw prim_depth_rw_proj
+   ... = sum_of_fin arg + 1 : by simp only [ack]
    ... >= sum_of_fin arg : by apply nat.le_succ
    ... >= arg a : by apply sum_of_fin_ge_arg
    ... =  prim_eval (prim_rec.proj a) arg : by reflexivity,
@@ -242,7 +233,6 @@ calc
   generalize (uncurry arg) pq,
   intro pq,
   cases pq with v rest,
-  simp,
   rw sum_of_fin_of_curry,
   rw prim_depth_rw_prec,
   pose fgdep := max (prim_depth f) (prim_depth g + 2) + 1,
@@ -264,24 +254,27 @@ calc
     ... >= ack (prim_depth g + 2) (ack fgdep (sum_of_fin rest + v')) : by apply ack_1st_incr_eq; apply le_max_right
     ... >= ack (prim_depth g + 1) (2 * ack fgdep (sum_of_fin rest + v')) : by apply nat.le_of_lt; apply ack_lemma_8; apply nat.le_add_left
     ... >= ack (prim_depth g) (2 * ack fgdep (sum_of_fin rest + v')) : by apply ack_1st_incr_eq; apply nat.le_add_right
-    ... >= ack (prim_depth g) (sum_of_fin rest + v' + 
-         ack fgdep (sum_of_fin rest + v')) :
+    ... >= ack (prim_depth g) (sum_of_fin (curry (h v' rest) (curry v' rest))) :
            begin
              apply ack_2nd_incr_eq,
-             rw nat.succ_mul,
-             apply nat.add_le_add_right,
-             rw nat.one_mul,
-             apply nat.le_of_lt,
-             apply ack_2nd_lt_val,
+             calc
+               2 * ack fgdep (sum_of_fin rest + v')
+               >= sum_of_fin rest + v' + ack fgdep (sum_of_fin rest + v') :
+                 begin
+                   rw nat.succ_mul,
+                   apply nat.add_le_add_right,
+                   rw nat.one_mul,
+                   apply nat.le_of_lt,
+                   apply ack_2nd_lt_val,
+                 end
+               ... >= sum_of_fin rest + v' + h v' rest :
+                 begin
+                   apply nat.add_le_add_left,
+                   exact ihinner,
+                 end
+               ... =  sum_of_fin (curry (h v' rest) (curry v' rest)) :
+                   by repeat { rw sum_of_fin_of_curry },
            end
-    ... >= ack (prim_depth g) (sum_of_fin rest + v' + h v' rest) :
-           begin
-             apply ack_2nd_incr_eq,
-             apply nat.add_le_add_left,
-             exact ihinner,
-           end
-    ... =  ack (prim_depth g) (sum_of_fin (curry (h v' rest) (curry v' rest))) :
-           by repeat { rw sum_of_fin_of_curry }
     ... >= prim_eval g (curry (h v' rest) (curry v' rest)) : by apply ih_2
     ... =  h (v' + 1) rest : by reflexivity,
 end
@@ -297,7 +290,8 @@ begin
   rw sum_of_fin_1 at ph,
   rw - (h x) at ph,
   apply lt_irrefl (ack (prim_depth f) x),
-  apply nat.lt_of_lt_of_le,
-  show ack (prim_depth f) x < ack x x, { apply ack_1st_succ },
-  show ack x x <= ack (prim_depth f) x, { exact ph },
+  calc
+    ack (prim_depth f) x
+        <  ack x x : by apply ack_1st_succ
+    ... <= ack (prim_depth f) x : ph,
 end
