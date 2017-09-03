@@ -87,10 +87,10 @@ end
 
 lemma eq_or_lt_of_le {x y: myint} (h: x <== y): x = y \/ S x <== y :=
 begin
-  apply ind_on_nat _ _ _ _ _ h,
+  apply fun foo bar, ind_on_nat (fun y, x = y \/ S x <== y) x foo bar _ h,
   simp,
   intros y' h1 h2,
-  apply or.inr,
+  right,
   apply succ_le_succ,
   exact h1,
 end
@@ -182,5 +182,102 @@ begin
   simp,
   exact h1,
 end
+
+
+lemma either_zero_of_mul_eq_zero_nonneg {x y: myint}:
+  O <== x -> O <== y -> x ** y = O -> x = O \/ y = O :=
+begin
+  apply ind_on_nat (fun x, O <== y -> x ** y = O -> _ \/ _),
+  simp,
+  intros x' h,
+  simp,
+  intros h1 h2 h3,
+  left,
+  revert h2 h3,
+  apply ind_on_nat (fun y, _ ** y = O -> _ = O);
+  simp,
+  intros y' h2 h3 h4,
+  rw mul_comm at h4,
+  simp at h4,
+  assert hfalse: false,
+  apply not_succ_le O,
+  apply @eq.rec _ _ (fun x, S O <== x) _ _ h4,
+  apply succ_le_succ,
+  rw -add_of_zero O,
+  apply add_le_add,
+  rw -add_of_zero O,
+  apply add_le_add,
+  apply le_trans,
+  show O <== O ** x',
+  rw mul_comm,
+  simp,
+  apply mul_le_mul_right_nonneg,
+  all_goals { try { assumption } },
+  contradiction,
+end
+
+
+theorem either_zero_of_mul_eq_zero {x y: myint}:
+  x ** y = O -> x = O \/ y = O :=
+begin
+  assert dich: forall x, O <== x \/ O <== neg x,
+  {
+    intro x,
+    cases @le_dichotomy_zero x with h h,
+    left,
+    exact h,
+    right,
+    apply le_of_neg_le_neg,
+    simp,
+    exact h,
+  },
+  assert neg_zero: forall x, neg x = O <-> x = O,
+  {
+    intro x,
+    split,
+    intro h,
+    rw -@neg_of_neg x,
+    rw h,
+    simp,
+    intro h,
+    rw h,
+    simp,
+  },
+  intro h,
+  cases dich x with h1 h1;
+  cases dich y with h2 h2,
+
+  apply either_zero_of_mul_eq_zero_nonneg; assumption,
+
+  rw -neg_zero y,
+  apply either_zero_of_mul_eq_zero_nonneg,
+  exact h1,
+  exact h2,
+  simp,
+  rw h,
+  simp,
+
+  rw -neg_zero x,
+  apply either_zero_of_mul_eq_zero_nonneg,
+  exact h1,
+  exact h2,
+  rw mul_comm,
+  simp,
+  rw mul_comm,
+  rw h,
+  simp,
+
+  rw -neg_zero x,
+  rw -neg_zero y,
+  apply either_zero_of_mul_eq_zero_nonneg,
+  exact h1,
+  exact h2,
+  simp,
+  rw mul_comm,
+  simp,
+  rw mul_comm,
+  exact h,
+end
+
 
 end myint
