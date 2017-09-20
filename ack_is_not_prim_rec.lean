@@ -14,7 +14,7 @@ begin
   show sum_of_fin tuple >= tuple i,
   {
     cases i with _ ilt0,
-    note := nat.not_succ_le_zero _ ilt0,
+    have := nat.not_succ_le_zero _ ilt0,
     contradiction,
   },
   show sum_of_fin tuple >= tuple i,
@@ -83,7 +83,7 @@ begin
         = sum_of_fin (fun i, curry v rest (fin.succ i)) + curry v rest 0 : by reflexivity
     ... = sum_of_fin rest + curry v rest 0 :
           begin
-            note h : (fun i, curry v rest (fin.succ i)) = rest :=
+            have h : (fun i, curry v rest (fin.succ i)) = rest :=
             begin
               apply funext,
               intro x,
@@ -96,13 +96,13 @@ end
 
 
 lemma fin_1_curry: forall arg: fin 1 -> nat, (fun _: fin 1, arg 0) = arg :=
-take arg,
+fun arg,
 begin
   apply funext,
   intro x,
   cases x with x lt,
-  note h: x <= 0 := nat.le_of_lt_succ lt,
-  note xeq0: x = 0 := nat.eq_zero_of_le_zero h,
+  have h: x <= 0 := nat.le_of_lt_succ lt,
+  have xeq0: x = 0 := nat.eq_zero_of_le_zero h,
   cases xeq0,
   reflexivity,
 end
@@ -213,9 +213,8 @@ calc
                        end
                ...  <= ack (k + 3 + sum_of_fin (fun i, prim_depth (g i))) (sum_of_fin arg) :
                        begin
-                         generalize (sum_of_fin (fun i, prim_depth (g i))) x,
-                         generalize (sum_of_fin arg) y,
-                         intros x y,
+                         generalize : sum_of_fin (fun i, prim_depth (g i)) = y,
+                         generalize : sum_of_fin arg = x,
                          calc
                            ack (y + 3) (x + k) <= ack (y + 3 + k) x :
                              by apply ack_arg_1st_prior_any
@@ -225,17 +224,16 @@ calc
   ...  >= prim_eval f (fun i, prim_eval (g i) arg) : by apply ih_1
   ...  =  prim_eval (prim_rec.comp f g) arg : by reflexivity,
   unfold prim_eval,
-  pose h: nat -> (fin k -> nat) -> nat :=
+  let h: nat -> (fin k -> nat) -> nat :=
     fun (v: nat) (arg: fin k -> nat),
       nat.rec (prim_eval f arg) (fun v' prev, prim_eval g (curry prev (curry v' arg))) v,
   show ack (prim_depth (prim_rec.prec f g)) (sum_of_fin arg) >= prim_eval._match_1 k h (uncurry arg),
   rw curry_of_uncurry arg,
-  generalize (uncurry arg) pq,
-  intro pq,
+  generalize : uncurry arg = pq,
   cases pq with v rest,
   rw sum_of_fin_of_curry,
   rw prim_depth_rw_prec,
-  pose fgdep := max (prim_depth f) (prim_depth g + 2) + 1,
+  let fgdep := max (prim_depth f) (prim_depth g + 2) + 1,
   show ack fgdep (sum_of_fin rest + v) >= h v rest,
   induction v with v' ihinner,
   calc
@@ -285,10 +283,10 @@ theorem ack_is_not_prim_rec:
   ack x x = prim_eval f (fun _, x)) -> false :=
 begin
   intros f h,
-  pose x: nat := prim_depth f + 1,
-  note ph := ack_dominates_prim_rec 1 f (fun _, x),
+  let x: nat := prim_depth f + 1,
+  have ph := ack_dominates_prim_rec 1 f (fun _, x),
   rw sum_of_fin_1 at ph,
-  rw - (h x) at ph,
+  rw <- (h x) at ph,
   apply lt_irrefl (ack (prim_depth f) x),
   calc
     ack (prim_depth f) x
@@ -302,7 +300,7 @@ theorem ack_is_not_prim_rec_2:
   ack x y =  prim_eval f (curry x (fun _: fin 1, y))) -> false :=
 begin
   intros f h,
-  note one_arg_ver: forall x, ack x x = prim_eval (prim_rec.comp f (fun _, prim_id)) (fun _, x)
+  have one_arg_ver: forall x, ack x x = prim_eval (prim_rec.comp f (fun _, prim_id)) (fun _, x)
   :=
   begin
     intro x,
@@ -313,10 +311,10 @@ begin
     apply funext,
     intro i,
     cases i with i is_lt,
-    note h := nat.le_of_lt_succ is_lt,
+    have h := nat.le_of_lt_succ is_lt,
     cases h,
     reflexivity,
-    note hp := nat.eq_zero_of_le_zero a,
+    have hp := nat.eq_zero_of_le_zero a,
     cases hp,
     reflexivity,
   end,

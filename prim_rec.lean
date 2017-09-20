@@ -65,7 +65,7 @@ def prim_eval : forall {k}, prim_rec k -> (fin k -> nat) -> nat
 
 
 lemma succ_succ : forall x, prim_eval prim_rec.succ (fun _, x) = x + 1 :=
-take x,
+fun x,
 calc
   prim_eval prim_rec.succ (fun _, x) = x + 1 : by unfold prim_eval; reflexivity
 
@@ -73,7 +73,7 @@ calc
 lemma uncurry_1: forall v: nat, uncurry (fun _: fin 1, v) = ⟨v, fun _, 0⟩ :=
 begin
   intro v,
-  assert h: forall x: fin 0 -> nat, x = (fun _, 0),
+  have h: forall x: fin 0 -> nat, x = (fun _, 0),
   {
     intros x,
     apply funext,
@@ -93,7 +93,6 @@ end
 lemma curry_at_0: forall k v (rest: fin k -> nat), curry v rest 0 = v :=
 begin
   intros k v rest,
-  unfold curry,
   reflexivity,
 end
 

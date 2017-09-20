@@ -119,14 +119,14 @@ end
 
 
 lemma ack_2nd_incr: forall m n p, n < p -> ack m n < ack m p :=
-  take m n p,
-  suppose nltp: n < p,
+  fun m n p,
+  assume nltp: n < p,
   incr_of_succ (ack m) (ack_2nd_succ m) n p nltp
 
 
 lemma ack_2nd_incr_eq: forall m n p, n <= p -> ack m n <= ack m p :=
-  take m n p,
-  suppose nlep: n <= p,
+  fun m n p,
+  assume nlep: n <= p,
   incr_eq_of_succ (ack m) (ack_2nd_succ m) n p nlep
 
 
@@ -147,15 +147,15 @@ end
 
 
 lemma ack_1st_incr: forall l m n, l < m -> ack l n < ack m n :=
-  take l m n,
-  suppose lltm: l < m,
-  incr_of_succ (fun i, ack i n) (take i, ack_1st_succ i n) l m lltm
+  fun l m n,
+  assume lltm: l < m,
+  incr_of_succ (fun i, ack i n) (fun i, ack_1st_succ i n) l m lltm
 
 
 lemma ack_1st_incr_eq: forall l m n, l <= m -> ack l n <= ack m n :=
-  take l m n,
-  suppose llem: l <= m,
-  incr_eq_of_succ (fun i, ack i n) (take i, ack_1st_succ i n) l m llem
+  fun l m n,
+  assume llem: l <= m,
+  incr_eq_of_succ (fun i, ack i n) (fun i, ack_1st_succ i n) l m llem
 
 
 lemma ack_arg_1st_prior: forall m n, ack m (n + 1) <= ack (m + 1) n :=
@@ -244,16 +244,16 @@ begin
   induction n with n' ih2,
   show 1 * ack x y <= ack x y, { simp },
   show (n' + 2) * ack x y <= ack x (y + n' + 1),
-  assert h: {x': nat // x' + 1 = x},
+  have h: {x': nat // x' + 1 = x},
   {
     cases x with x',
-    note hnotle: not (3 <= 0) := nat.not_succ_le_zero 2,
+    have hnotle: not (3 <= 0) := nat.not_succ_le_zero 2,
     contradiction,
     existsi x',
     reflexivity,
   },
   cases h with x' xsucc,
-  assert x'ge2: x' >= 2,
+  have x'ge2: x' >= 2,
   {
     apply nat.le_of_add_le_add_right,
     rw xsucc,
