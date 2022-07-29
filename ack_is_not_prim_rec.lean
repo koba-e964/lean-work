@@ -76,22 +76,23 @@ end
 
 
 lemma sum_of_fin_of_curry: forall k v, forall rest: fin k -> nat,
-  sum_of_fin (curry v rest) = sum_of_fin rest + v := fun k v rest,
+  sum_of_fin (fin_seq.push v rest) = sum_of_fin rest + v := fun k v rest,
 begin
   calc
-    sum_of_fin (curry v rest)
-        = sum_of_fin (fun i, curry v rest (fin.succ i)) + curry v rest 0 : by reflexivity
-    ... = sum_of_fin rest + curry v rest 0 :
+    sum_of_fin (fin_seq.push v rest)
+        = sum_of_fin (fun i, fin_seq.push v rest (fin.succ i)) + fin_seq.push v rest 0 : by reflexivity
+    ... = sum_of_fin rest + fin_seq.push v rest 0 :
           begin
-            have h : (fun i, curry v rest (fin.succ i)) = rest :=
+            have h : (fun i, fin_seq.push v rest (fin.succ i)) = rest :=
             begin
               apply funext,
               intro x,
-              rw curry_at_succ,
+              rw fin_seq.push_at_succ,
             end,
             rw h,
           end
-    ... = sum_of_fin rest + v : by rw curry_at_0
+    ... = sum_of_fin rest + fin_seq.push v rest 0 : by reflexivity
+    ... = sum_of_fin rest + v : by rw fin_seq.push_at_0
 end
 
 
@@ -146,7 +147,7 @@ fun k f g, by cases k; reflexivity
 theorem ack_dominates_prim_rec:
   forall k, forall f: prim_rec k,
   forall arg: fin k -> nat,
-  ack (prim_depth f) (sum_of_fin arg) >= prim_eval f arg :=
+  ack (prim_depth f) (sum_of_fin arg) >= prim_rec.eval f arg :=
 fun k_d f arg,
 begin
 induction f with n a k m f g _ _ k f g; clear k_d,
@@ -155,21 +156,21 @@ calc
       =  ack 0 0 : by reflexivity
   ... =  1 : by simp only [ack]
   ... >= 0 : by apply nat.le_succ
-  ... =  prim_eval prim_rec.zero arg : by reflexivity,
+  ... =  prim_rec.eval prim_rec.zero arg : by reflexivity,
 calc
   ack (prim_depth prim_rec.succ) (sum_of_fin arg)
        = ack 0 (sum_of_fin arg) : by reflexivity
    ... = sum_of_fin arg + 1 : by simp only [ack]
    ... = sum_of_fin (fun _: fin 1, arg 0) + 1 : by rw fin_1_curry
    ... = arg 0 + 1 : by rw sum_of_fin_1
-   ... >= prim_eval prim_rec.succ arg : by apply nat.le_refl,
+   ... >= prim_rec.eval prim_rec.succ arg : by apply nat.le_refl,
 calc
   ack (prim_depth (prim_rec.proj a)) (sum_of_fin arg)
        = ack 0 (sum_of_fin arg) : by rw prim_depth_rw_proj
    ... = sum_of_fin arg + 1 : by simp only [ack]
    ... >= sum_of_fin arg : by apply nat.le_succ
    ... >= arg a : by apply sum_of_fin_ge_arg
-   ... =  prim_eval (prim_rec.proj a) arg : by reflexivity,
+   ... =  prim_rec.eval (prim_rec.proj a) arg : by reflexivity,
 calc
   ack (prim_depth (prim_rec.comp f g)) (sum_of_fin arg)
        = ack (max (prim_depth f) (k + 3 + sum_of_fin (fun i, prim_depth (g i))) + 2) (sum_of_fin arg)
@@ -178,11 +179,11 @@ calc
            by apply ack_arg_1st_prior
   ...  >= ack (prim_depth f) (ack (k + 3 + sum_of_fin (fun i, prim_depth (g i))) (sum_of_fin arg))
          : by apply ack_dual_app
-  ...  >= ack (prim_depth f) (sum_of_fin (fun i, prim_eval (g i) arg)) :
+  ...  >= ack (prim_depth f) (sum_of_fin (fun i, prim_rec.eval (g i) arg)) :
            begin
              apply ack_2nd_incr_eq,
              calc
-               sum_of_fin (fun i, prim_eval (g i) arg)
+               sum_of_fin (fun i, prim_rec.eval (g i) arg)
                     <= sum_of_fin (fun i, ack (prim_depth (g i)) (sum_of_fin arg)) :
                        begin
                          apply sum_of_fin_incr_eq,
@@ -221,15 +222,15 @@ calc
                            ... = ack (k + 3 + y) x : by simp
                        end
            end
-  ...  >= prim_eval f (fun i, prim_eval (g i) arg) : by apply ih_1
-  ...  =  prim_eval (prim_rec.comp f g) arg : by reflexivity,
-  unfold prim_eval,
+  ...  >= prim_rec.eval f (fun i, prim_rec.eval (g i) arg) : by apply ih_1
+  ...  =  prim_rec.eval (prim_rec.comp f g) arg : by reflexivity,
+  unfold prim_rec.eval,
   let h: nat -> (fin k -> nat) -> nat :=
     fun (v: nat) (arg: fin k -> nat),
-      nat.rec (prim_eval f arg) (fun v' prev, prim_eval g (curry prev (curry v' arg))) v,
-  show ack (prim_depth (prim_rec.prec f g)) (sum_of_fin arg) >= prim_eval._match_1 k h (uncurry arg),
-  rw curry_of_uncurry arg,
-  generalize : uncurry arg = pq,
+      nat.rec (prim_rec.eval f arg) (fun v' prev, prim_rec.eval g (fin_seq.push prev (fin_seq.push v' arg))) v,
+  show ack (prim_depth (prim_rec.prec f g)) (sum_of_fin arg) >= prim_rec.eval._match_1 k h (fin_seq.pop arg),
+  rw fin_seq.push_of_pop arg,
+  generalize : fin_seq.pop arg = pq,
   cases pq with v rest,
   rw sum_of_fin_of_curry,
   rw prim_depth_rw_prec,
@@ -244,7 +245,7 @@ calc
              apply nat.le_succ_of_le,
              apply le_max_left,
            end
-    ... >= prim_eval f rest : by apply ih_1
+    ... >= prim_rec.eval f rest : by apply ih_1
     ... =  h 0 rest : by reflexivity,
   calc
     ack fgdep (sum_of_fin rest + v' + 1)
@@ -252,7 +253,7 @@ calc
     ... >= ack (prim_depth g + 2) (ack fgdep (sum_of_fin rest + v')) : by apply ack_1st_incr_eq; apply le_max_right
     ... >= ack (prim_depth g + 1) (2 * ack fgdep (sum_of_fin rest + v')) : by apply nat.le_of_lt; apply ack_lemma_8; apply nat.le_add_left
     ... >= ack (prim_depth g) (2 * ack fgdep (sum_of_fin rest + v')) : by apply ack_1st_incr_eq; apply nat.le_add_right
-    ... >= ack (prim_depth g) (sum_of_fin (curry (h v' rest) (curry v' rest))) :
+    ... >= ack (prim_depth g) (sum_of_fin (fin_seq.push (h v' rest) (fin_seq.push v' rest))) :
            begin
              apply ack_2nd_incr_eq,
              calc
@@ -270,17 +271,17 @@ calc
                    apply nat.add_le_add_left,
                    exact ihinner,
                  end
-               ... =  sum_of_fin (curry (h v' rest) (curry v' rest)) :
+               ... =  sum_of_fin (fin_seq.push (h v' rest) (fin_seq.push v' rest)) :
                    by repeat { rw sum_of_fin_of_curry },
            end
-    ... >= prim_eval g (curry (h v' rest) (curry v' rest)) : by apply ih_2
+    ... >= prim_rec.eval g (fin_seq.push (h v' rest) (fin_seq.push v' rest)) : by apply ih_2
     ... =  h (v' + 1) rest : by reflexivity,
 end
 
 
 theorem ack_is_not_prim_rec:
   forall f: prim_rec 1, (forall x,
-  ack x x = prim_eval f (fun _, x)) -> false :=
+  ack x x = prim_rec.eval f (fun _, x)) -> false :=
 begin
   intros f h,
   let x: nat := prim_depth f + 1,
@@ -297,15 +298,15 @@ end
 
 theorem ack_is_not_prim_rec_2:
   forall f: prim_rec 2, (forall x y,
-  ack x y =  prim_eval f (curry x (fun _: fin 1, y))) -> false :=
+  ack x y =  prim_rec.eval f (fin_seq.push x (fun _: fin 1, y))) -> false :=
 begin
   intros f h,
-  have one_arg_ver: forall x, ack x x = prim_eval (prim_rec.comp f (fun _, prim_id)) (fun _, x)
+  have one_arg_ver: forall x, ack x x = prim_rec.eval (prim_rec.comp f (fun _, prim_rec.id)) (fun _, x)
   :=
   begin
     intro x,
-    show ack x x = prim_eval f (fun _, prim_eval prim_id (fun _, x)),
-    rw prim_id_is_id,
+    show ack x x = prim_rec.eval f (fun _, prim_rec.eval prim_rec.id (fun _, x)),
+    rw prim_rec.id.is_id,
     rw h x x,
     apply congr_arg,
     apply funext,
