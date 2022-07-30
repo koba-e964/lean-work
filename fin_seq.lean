@@ -1,4 +1,4 @@
-def fin_seq k (t: Type) := fin k -> t
+def fin_seq (k: nat) (t: Type) := fin k -> t
 
 namespace fin_seq
 
