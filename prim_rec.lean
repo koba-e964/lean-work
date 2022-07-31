@@ -105,7 +105,7 @@ def add: prim_rec 2 := prec id (comp succ ({proj 0}: fin_seq _ _))
 -- sub_rev(x, y) = y - x
 def sub_rev: prim_rec 2 := prec id (comp pred ({proj 0}: fin_seq _ _))
 def sub: prim_rec 2 := comp sub_rev (fin_seq.push (proj 1) {proj 0})
-def mul: prim_rec 2 := prec (comp zero (fun _, succ)) (comp add (fin_seq.push (proj 1) {proj 2}))
+def mul: prim_rec 2 := prec (comp zero (fun _, succ)) (comp add (fin_seq.push (proj 0) {proj 2}))
 
 @[simp] lemma add.is_add: forall x y, eval add (fin_seq.push x {y}) = x + y :=
 begin
@@ -143,6 +143,75 @@ begin
     simp,
     rw ih,
     reflexivity,
+  },
+end
+
+@[simp] lemma sub_rev.is_sub_rev_bulk: forall xy, eval sub_rev xy = xy 1 - xy 0 :=
+begin
+  intro xy,
+  let x := (fin_seq.pop xy).fst,
+  let ys := (fin_seq.pop xy).snd,
+  have h1: xy 0 = x,
+  {
+    reflexivity,
+  },
+  let y := ys 0,
+  have h2: xy 1 = y,
+  {
+    reflexivity,
+  },
+  have heq: fin_seq.push x {y} = xy,
+  {
+    apply funext,
+    intro i,
+    induction i with i is_lt,
+    cases is_lt with _ is_le,
+    -- i = 1
+    {
+      change y = xy 1,
+      rw h2,
+    },
+    -- i = 0
+    {
+      cases is_le with _ is_le,
+      -- i = 0
+      {
+        change x = xy 0,
+        rw h1,
+      },
+      -- i < 0
+      {
+        have := nat.not_succ_le_zero _ is_le,
+        contradiction,
+      },
+    },
+  },
+  rw <- heq,
+  apply sub_rev.is_sub_rev,
+end
+
+@[simp] lemma sub.is_sub: forall x y, eval sub (fin_seq.push x {y}) = x - y :=
+begin
+  simp only [eval, sub],
+  simp [sub_rev.is_sub_rev_bulk, eval],
+  intros x y,
+  reflexivity,
+end
+
+@[simp] lemma mul.is_mul: forall x y, eval mul (fin_seq.push x {y}) = x * y :=
+begin
+  intro x,
+  induction x with x' ih; intro y,
+  {
+    change 0 = 0 * y,
+    rw nat.zero_mul,
+  },
+  {
+    simp only [mul, eval],
+    change add.eval (fin_seq.push (mul.eval (fin_seq.push x' {y})) ({y}: fin_seq _ _)) = x'.succ * y,
+    rw ih,
+    rw add.is_add,
+    rw nat.succ_mul,
   },
 end
 
