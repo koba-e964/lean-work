@@ -88,29 +88,29 @@ begin
   induction y with y' ih2 y' ih2,
   rw add_of_zero,
   simp,
-  rw -ih O,
+  rw <- ih O,
   simp,
   simp,
   rw ih2,
-  rw -ih,
+  rw <- ih,
   simp,
   rw ih,
   simp,
   rw ih2,
-  rw -ih,
+  rw <- ih,
   simp,
   rw ih,
 
   intro y,
   induction y with y' ih2 y' ih2,
   simp,
-  rw -ih,
+  rw <- ih,
   simp,
   simp [ih2],
-  rw -ih, rw -ih,
+  rw <- ih, rw <- ih,
   simp,
   simp [ih2],
-  rw -ih, rw -ih,
+  rw <- ih, rw <- ih,
   simp,
 end
 
@@ -127,7 +127,7 @@ end
 lemma add_of_neg: forall x, x ++ neg x = O :=
 fun x,
 begin
-  induction x,
+  induction x with _ a _ a,
   simp,
   simp,
   rw add_comm,
@@ -167,14 +167,14 @@ begin
   all_goals {
     induction y with y' ih2 y' ih2,
     simp,
-    rw -ih,
+    rw <- ih,
     simp,
     all_goals {
       simp,
       rw ih2,
       simp,
-      rw -ih,
-      rw -ih,
+      rw <- ih,
+      rw <- ih,
       simp,
       repeat { rw add_assoc },
       repeat { apply congr_arg },
@@ -190,9 +190,9 @@ begin
   simp,
   all_goals {
     simp,
-    rw -ih,
+    rw <- ih,
     repeat { rw add_assoc },
-    rw -add_assoc _ (y ** z'),
+    rw <- add_assoc _ (y ** z'),
     rw add_comm _ (y ** z'),
     rw add_assoc (y ** z'),
   },
@@ -215,7 +215,7 @@ begin
   rw ih,
   rw neg_of_add,
   rw ih,
-  rw -neg_of_add,
+  rw <- neg_of_add,
   simp,
 end
 
@@ -227,7 +227,7 @@ begin
   simp [ih],
   rw mul_add_dist_left,
   simp [ih],
-  rw -mul_add_dist_left,
+  rw <- mul_add_dist_left,
   simp,
 end
 

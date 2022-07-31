@@ -20,17 +20,17 @@ begin
   show (n' + 1) + 0 = 0 + (n' + 1),
   {
     calc
-      (n' + 1) + 0 = n' + 1 : by simp
-               ... = (n' + 0) + 1 : by simp
+      (n' + 1) + 0 = n' + 1 : by reflexivity
+               ... = (n' + 0) + 1 : by reflexivity
                ... = (0 + n') + 1 : by rw ih
-               ... = 0 + (n' + 1) : by simp
+               ... = 0 + (n' + 1) : by reflexivity
   },
   show (n' + 1) + (m' + 1) = (m' + 1) + (n' + 1),
   calc
     (n' + 1) + (m' + 1) = (n' + 1) + m' + 1 : by reflexivity
                    ...  = m' + (n' + 1) + 1 : by rw ih2
                    ...  = m' + n' + 2 : by reflexivity
-                   ...  = n' + m' + 2 : by rw -ih
+                   ...  = n' + m' + 2 : by rw <- ih
                    ...  = n' + (m' + 1) + 1 : by reflexivity
                    ...  = (m' + 1) + n' + 1 : by rw ih
                    ...  = (m' + 1) + (n' + 1) : by reflexivity
