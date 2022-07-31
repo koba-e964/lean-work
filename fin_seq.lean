@@ -109,4 +109,43 @@ begin
   reflexivity,
 end
 
+@[simp] lemma length_1_of_singleton: forall {t} (xs: fin_seq 1 t), ({xs 0}: fin_seq 1 _) = xs :=
+begin
+  intros t xs,
+  apply funext,
+  intro i,
+  cases i with i is_lt,
+  have := nat.le_of_lt_succ is_lt,
+  have := nat.eq_zero_of_le_zero this,
+  cases this,
+  reflexivity,
+end
+
+@[simp] lemma length_2_of_insert_of_singleton: forall {t} (xs: fin_seq 2 t),
+  fin_seq.push (xs 0) {xs 1} = xs :=
+begin
+  intros t xs,
+  apply funext,
+  intro i,
+  induction i with i is_lt,
+  cases is_lt with _ is_le,
+  -- i = 1
+  {
+    reflexivity,
+  },
+  -- i = 0
+  {
+    cases is_le with _ is_le,
+    -- i = 0
+    {
+      reflexivity,
+    },
+    -- i < 0
+    {
+      have := nat.not_succ_le_zero _ is_le,
+      contradiction,
+    },
+  },
+end
+
 end fin_seq
