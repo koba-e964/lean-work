@@ -1,0 +1,21 @@
+name: Lean Prover
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install lean
+      run: |
+        curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSfO
+        sh elan-init.sh -y
+    - name: check all files
+      run: $HOME/.elan/bin/lean *.lean
