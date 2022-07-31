@@ -10,7 +10,7 @@ lemma sum_of_fin_ge_arg : forall n, forall tuple: fin n -> nat, forall i: fin n,
   sum_of_fin tuple >= tuple i :=
 fun n tuple i,
 begin
-  induction n,
+  induction n with n' ih_1,
   show sum_of_fin tuple >= tuple i,
   {
     cases i with _ ilt0,
@@ -47,7 +47,7 @@ end
 
 
 lemma sum_of_fin_1: forall x, sum_of_fin (fun _: fin 1, x) = x :=
-fun x, by rw sum_of_fin_const; simp
+fun x, by rw sum_of_fin_const; apply nat.one_mul
 
 
 lemma sum_of_fin_incr_eq: forall k, forall x y: fin k -> nat,
@@ -150,7 +150,7 @@ theorem ack_dominates_prim_rec:
   ack (prim_depth f) (sum_of_fin arg) >= prim_rec.eval f arg :=
 fun k_d f arg,
 begin
-induction f with n a k m f g _ _ k f g; clear k_d,
+induction f with n a k m f g ih_1 ih_2 k f g ih_1 ih_2; clear k_d,
 calc
   ack (prim_depth prim_rec.zero) (sum_of_fin arg)
       =  ack 0 0 : by reflexivity
@@ -219,7 +219,9 @@ calc
                          calc
                            ack (y + 3) (x + k) <= ack (y + 3 + k) x :
                              by apply ack_arg_1st_prior_any
-                           ... = ack (k + 3 + y) x : by simp
+                           ... = ack (y + k + 3) x : by simp only [nat.succ_add]
+                           ... = ack (y + (k + 3)) x : by reflexivity
+                           ... = ack (k + 3 + y) x : by rw nat.add_comm y (k + 3)
                        end
            end
   ...  >= prim_rec.eval f (fun i, prim_rec.eval (g i) arg) : by apply ih_1
@@ -305,7 +307,7 @@ begin
   :=
   begin
     intro x,
-    show ack x x = prim_rec.eval f (fun _, prim_rec.eval prim_rec.id (fun _, x)),
+    show ack x x = prim_rec.eval f (fun _, prim_rec.eval prim_rec.id ({x}: fin_seq _ _)),
     rw prim_rec.id.is_id,
     rw h x x,
     apply congr_arg,
@@ -313,8 +315,7 @@ begin
     intro i,
     cases i with i is_lt,
     have h := nat.le_of_lt_succ is_lt,
-    cases h,
-    reflexivity,
+    cases h with _ a, { reflexivity },
     have hp := nat.eq_zero_of_le_zero a,
     cases hp,
     reflexivity,

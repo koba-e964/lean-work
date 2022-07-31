@@ -13,7 +13,7 @@ begin
     intro n,
     calc
       n   < n + 1 : nat.le_refl _
-      ... = ack 0 n : by simp [ack]
+      ... = ack 0 n : by simp only [ack]
   },
   show forall n, n < ack (m' + 1) n,
   {
@@ -44,7 +44,7 @@ begin
   show forall n, 0 + n < ack 0 n,
   {
     intro n,
-    rw add_comm,
+    rw nat.add_comm,
     apply ack_2nd_lt_val,
   },
   show forall n, m' + 1 + n < ack (m' + 1) n,
@@ -139,7 +139,7 @@ begin
   {
     calc
       ack m (n' + 1) <= ack m (m + 1 + n') :
-            by apply ack_2nd_incr_eq; simp; apply nat.le_add_left
+            by apply ack_2nd_incr_eq; rw nat.succ_add; apply nat.le_add_left
                  ... <  ack m (ack (m + 1) n') :
             by apply ack_2nd_incr; apply ack_argsum_lt_val
   },
@@ -170,7 +170,7 @@ begin
         begin
           apply ack_2nd_incr_eq,
           calc
-            n' + 2 <= m + 1 + n' + 1 : by simp; apply nat.le_add_left
+            n' + 2 <= m + 1 + n' + 1 : by rw nat.succ_add; apply nat.le_add_left
                ... <= ack (m + 1) n' : by apply ack_argsum_lt_val
         end
                  ... =  ack (m + 1) (n' + 1) : by simp [ack]
@@ -189,7 +189,7 @@ begin
   calc
     ack m (n + p' + 1) <= ack (m + 1) (n + p') : by apply ack_arg_1st_prior
                    ... <= ack (m + 1 + p') n : by apply ih
-                   ... =  ack (m + p' + 1) n : by simp
+                   ... =  ack (m + p' + 1) n : by rw nat.succ_add
 end
 
 
@@ -212,7 +212,7 @@ begin
 end
 
 
-lemma ack_1_n: forall n, ack 1 n = n + 2 :=
+@[simp] lemma ack_1_n: forall n, ack 1 n = n + 2 :=
 begin
   intro n,
   induction n with n' ih,
@@ -224,7 +224,7 @@ begin
 end
 
 
-lemma ack_2_n: forall n, ack 2 n = 2 * n + 3 :=
+@[simp] lemma ack_2_n: forall n, ack 2 n = 2 * n + 3 :=
 begin
   intro n,
   induction n with n' ih,
@@ -242,7 +242,7 @@ lemma ack_lemma_7: forall n x y,
 begin
   intros n x y hlt,
   induction n with n' ih2,
-  show 1 * ack x y <= ack x y, { simp },
+  show 1 * ack x y <= ack x y, { rw nat.one_mul },
   show (n' + 2) * ack x y <= ack x (y + n' + 1),
   have h: {x': nat // x' + 1 = x},
   {
@@ -269,7 +269,7 @@ begin
                                  ... =  2 * n' + 2 : by rw nat.succ_mul 1
                                  ... =  2 * (n' + 1) : by reflexivity,
                           end
-                   ... =  2 * ((n' + 1) * ack x y) : by rw mul_assoc
+                   ... =  2 * ((n' + 1) * ack x y) : by rw nat.mul_assoc
                    ... <= 2 * ack x (y + n') : by
                           apply nat.mul_le_mul_left;
                           exact ih2
