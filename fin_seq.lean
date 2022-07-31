@@ -30,6 +30,10 @@ def empty: fin_seq 0 nat := fun _, 0
 
 def singleton {t: Type} (v: t): fin_seq 1 t := fun _, v
 
+instance : has_emptyc (fin_seq 0 nat) := ⟨empty⟩
+
+instance {t: Type}: has_singleton t (fin_seq 1 t) := ⟨singleton⟩
+
 lemma push_of_pop: forall {t: Type} {k} (a: fin_seq (k + 1) t),
   a = let p := pop a in
       push p.fst p.snd :=
@@ -46,7 +50,7 @@ begin
   reflexivity,
 end
 
-lemma empty_is_unique: forall x: fin_seq 0 nat, x = empty :=
+@[simp] lemma empty_is_unique: forall x: fin_seq 0 nat, x = empty :=
 begin
   intros x,
   apply funext,
@@ -55,8 +59,8 @@ begin
   cases is_lt,  
 end
 
-lemma pop_of_push: forall {t k} (v: t) (a: fin_seq k t),
-  (v, a) = pop (push v a) :=
+@[simp] lemma pop_of_push: forall {t k} (v: t) (a: fin_seq k t),
+  pop (push v a) = (v, a) :=
 begin
   intros t k v a,
   simp [pop],
@@ -72,7 +76,7 @@ begin
   reflexivity,
 end
 
-lemma pop_1: forall v: nat, pop (singleton v) = ⟨v, empty⟩ :=
+@[simp] lemma pop_1: forall v: nat, pop (singleton v) = ⟨v, empty⟩ :=
 begin
   intro v,
   simp [singleton],
@@ -85,17 +89,23 @@ begin
   apply this,
 end
 
-lemma push_at_0: forall {t k} v (rest: fin_seq k t), fin_seq.push v rest 0 = v :=
+@[simp] lemma push_at_0: forall {t k} v (rest: fin_seq k t), fin_seq.push v rest 0 = v :=
 begin
   intros t k v rest,
   reflexivity,
 end
 
-lemma push_at_succ: forall {t k} v (rest: fin_seq k t) (i: fin k), push v rest (fin.succ i) = rest i
+@[simp] lemma push_at_succ: forall {t k} v (rest: fin_seq k t) (i: fin k), push v rest (fin.succ i) = rest i
   :=
 begin
   intros t k v rest i,
   cases i with i is_lt,
+  reflexivity,
+end
+
+@[simp] lemma singleton_at_0: forall {t} (v: t), ({v}: fin_seq 1 t) 0 = v :=
+begin
+  intros t v,
   reflexivity,
 end
 
